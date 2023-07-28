@@ -5,12 +5,14 @@ export class User extends Model<User> {
   @Column({
     type: DataType.STRING,
     allowNull: false,
+    unique: true,
   })
   first_name: string;
 
   @Column({
     type: DataType.STRING,
     allowNull: false,
+    unique: true,
   })
   last_name: string;
 
@@ -18,6 +20,11 @@ export class User extends Model<User> {
     type: DataType.STRING,
     allowNull: false,
     unique: true,
+    validate: {
+      isEmail: {
+        msg: 'Email address must be valid',
+      },
+    },
   })
   email: string;
 

@@ -1,14 +1,18 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, HttpException, HttpStatus } from '@nestjs/common';
 import { AppService } from './app.service';
 import { EventPattern, MessagePattern } from '@nestjs/microservices';
 import { CreateUserEvent } from './create-user.event';
 import { CreateUserRequest } from './create-user.request';
 import * as moment from 'moment';
 import * as jwt from 'jwt-simple';
+import { JwtService } from '@nestjs/jwt';
 
 @Controller()
 export class AppController {
-  constructor(private readonly appService: AppService) {}
+  constructor(
+    private readonly appService: AppService,
+    private jwtService: JwtService,
+  ) {}
 
   @Get()
   getHello(): string {
@@ -51,6 +55,24 @@ export class AppController {
       message: 'User registered successfully',
       data: data,
     };
+  }
+
+  @MessagePattern('login')
+  async handleUserLoginRequest(userData) {
+    console.log(userData);
+    const user = await this.appService.findByEmail(userData.email);
+
+    if (
+      !user ||
+      !(await this.appService.comparePasswords(user, userData.password))
+    ) {
+      throw new HttpException('Invalid credentials', HttpStatus.UNAUTHORIZED);
+    }
+
+    const payload = { email: userData.email, sub: user.id };
+    const token = this.jwtService.sign(payload);
+
+    return { token };
   }
 
   @MessagePattern('get_all_users')

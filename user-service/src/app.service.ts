@@ -28,6 +28,10 @@ export class AppService {
     return this.usersRepository.findOne({ where: { email } });
   }
 
+  comparePasswords(user: User, password: string) {
+    return bcrypt.compare(password, user.password);
+  }
+
   async processCreateUserRequest(userData: User): Promise<User> {
     // return this.usersRepository.create(user);
     // const id = uuidv4();

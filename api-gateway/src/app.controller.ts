@@ -42,6 +42,11 @@ export class AppController {
       .toPromise();
   }
 
+  @Post('login')
+  proxyLoginPostRequest(@Body() loginRequest: any) {
+    return this.client.send<any, any>('login', loginRequest).toPromise();
+  }
+
   @Get('users')
   proxyGetUsersRequest() {
     return this.client.send<any, any>('get_all_users', {}).toPromise();
