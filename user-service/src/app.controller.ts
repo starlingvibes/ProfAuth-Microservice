@@ -1,4 +1,10 @@
-import { Controller, Get, HttpException, HttpStatus } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  HttpException,
+  HttpStatus,
+  UseGuards,
+} from '@nestjs/common';
 import { AppService } from './app.service';
 import { EventPattern, MessagePattern } from '@nestjs/microservices';
 import { CreateUserEvent } from './create-user.event';
@@ -6,6 +12,8 @@ import { CreateUserRequest } from './create-user.request';
 import * as moment from 'moment';
 import * as jwt from 'jwt-simple';
 import { JwtService } from '@nestjs/jwt';
+import { AuthGuard } from '@nestjs/passport';
+import { AuthUser } from './decorators/user.decorator';
 
 @Controller()
 export class AppController {
@@ -59,57 +67,117 @@ export class AppController {
 
   @MessagePattern('login')
   async handleUserLoginRequest(userData) {
-    console.log(userData);
-    const user = await this.appService.findByEmail(userData.email);
+    try {
+      const user = await this.appService.findByEmail(userData.email);
 
-    if (
-      !user ||
-      !(await this.appService.comparePasswords(user, userData.password))
-    ) {
-      throw new HttpException('Invalid credentials', HttpStatus.UNAUTHORIZED);
+      if (
+        !user ||
+        !(await this.appService.comparePasswords(user, userData.password))
+      ) {
+        throw new HttpException('Invalid credentials', HttpStatus.UNAUTHORIZED);
+      }
+
+      const payload = { email: userData.email, role: 'user' };
+      const token = this.jwtService.sign(payload);
+
+      return {
+        status: 'success',
+        message: 'User logged in successfully',
+        token,
+      };
+    } catch (error) {
+      return {
+        status: 'error',
+        message: error.message,
+        data: null,
+      };
     }
-
-    const payload = { email: userData.email, sub: user.id };
-    const token = this.jwtService.sign(payload);
-
-    return { token };
   }
 
   @MessagePattern('get_all_users')
-  async handleFetchUsersRequest(data: any) {
-    const users = await this.appService.processFetchUsersRequest();
+  // @UseGuards(AuthGuard('jwt'))
+  async handleFetchUsersRequest(data: any, @AuthUser() user: any) {
+    try {
+      const users = await this.appService.processFetchUsersRequest();
 
-    return users;
+      return {
+        status: 'success',
+        message: 'Users retrieved successfully',
+        data: users,
+      };
+    } catch (error) {
+      return {
+        status: 'error',
+        message: error.message,
+        data: null,
+      };
+    }
   }
 
   @MessagePattern('fetch_single_user')
   async handleFetchUserRequest(data: { id: number }) {
-    const { id } = data;
+    try {
+      const { id } = data;
 
-    const user = await this.appService.processFetchUserRequest(id);
+      const user = await this.appService.processFetchUserRequest(id);
 
-    return user;
+      return {
+        status: 'success',
+        message: 'User retrieved successfully',
+        data: user,
+      };
+    } catch (error) {
+      return {
+        status: 'error',
+        message: error.message,
+        data: null,
+      };
+    }
   }
 
   @MessagePattern('update_single_user')
   async handleUpdateUserRequest(data: { id: number; [key: string]: any }) {
     // Extract ID and updated data from request
-    const { id, ...updatedUserData } = data;
+    try {
+      const { id, ...updatedUserData } = data;
 
-    const updatedUser = await this.appService.processUpdateUserRequest(
-      id,
-      updatedUserData,
-    );
+      const updatedUser = await this.appService.processUpdateUserRequest(
+        id,
+        updatedUserData,
+      );
 
-    return updatedUser;
+      return {
+        status: 'success',
+        message: 'User updated successfully',
+        data: updatedUser,
+      };
+    } catch (error) {
+      return {
+        status: 'error',
+        message: error.message,
+        data: null,
+      };
+    }
   }
 
   @MessagePattern('delete_single_user')
   async handleDeleteUserRequest(data: { id: number }) {
-    const { id } = data;
+    try {
+      const { id } = data;
 
-    const deletedUser = await this.appService.processDeleteUserRequest(id);
+      const deletedUser = await this.appService.processDeleteUserRequest(id);
 
-    return deletedUser;
+      return {
+        status: 'success',
+        message: 'User deleted successfully',
+        data: deletedUser,
+      };
+    } catch (error) {
+      return {
+        status: 'error',
+        message: error.message,
+        data: null,
+      };
+    }
   }
 }

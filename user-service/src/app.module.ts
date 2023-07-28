@@ -9,6 +9,8 @@ import { User } from './entities/user.entity';
 import { JwtModule, JwtService } from '@nestjs/jwt';
 import { JwtStrategy } from './strategy/jwt.strategy';
 import { PassportModule } from '@nestjs/passport';
+import { APP_GUARD } from '@nestjs/core';
+import { JwtAuthGuard } from './jwt-auth.guard';
 
 export const jwtSecret = process.env.JWT_SECRET;
 @Module({
@@ -22,7 +24,16 @@ export const jwtSecret = process.env.JWT_SECRET;
     // SequelizeModule.forFeature([User])
   ],
   controllers: [AppController],
-  providers: [AppService, ...databaseProviders, ...usersProviders],
+  providers: [
+    AppService,
+    ...databaseProviders,
+    ...usersProviders,
+    {
+      provide: APP_GUARD,
+      useClass: JwtAuthGuard,
+    },
+    JwtStrategy,
+  ],
   exports: [...databaseProviders],
 })
 export class AppModule {}
