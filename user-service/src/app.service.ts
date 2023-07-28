@@ -39,7 +39,7 @@ export class AppService {
 
     userData.password = hashedPassword;
 
-    let setAdmin = false;
+    const setAdmin = false;
 
     // if (
     //   !userData.token ||
@@ -52,6 +52,7 @@ export class AppService {
 
     // delete userData.token;
 
+    // to create an admin user, a special token is required
     if (setAdmin) {
       userData.role = 'admin';
 

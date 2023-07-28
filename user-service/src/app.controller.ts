@@ -77,6 +77,7 @@ export class AppController {
         throw new HttpException('Invalid credentials', HttpStatus.UNAUTHORIZED);
       }
 
+      // create payload and sign token
       const payload = { email: userData.email, role: 'user' };
       const token = this.jwtService.sign(payload);
 
